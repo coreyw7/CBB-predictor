@@ -91,6 +91,12 @@ uv sync
 
 **Download the data:** Get the latest March Machine Learning Mania dataset from Kaggle and place the men's files (prefixed with `M`) in `data/raw/`.
 
+**Load data into DuckDB:** Run the following command to restructure and load the raw data into a DuckDB file.
+
+```bash
+uv run cbb-ingest
+```
+
 **Run the tests:**
 
 ```bash
@@ -100,7 +106,7 @@ uv run pytest
 ## Roadmap
 
 - [x] Project setup (uv, git, project structure)
-- [ ] Load historical Kaggle data into DuckDB
+- [x] Load historical Kaggle data into DuckDB
 - [ ] Team ID mapping across data sources
 - [ ] Point-in-time feature pipeline
 - [ ] Elo rating system
