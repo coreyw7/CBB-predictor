@@ -37,7 +37,28 @@ College basketball is one of the hardest sports to predict. There are 360+ Divis
 
 ## Results
 
-_Backtest results will be published here once the baseline model is complete._
+### Elo baseline
+
+The first model is an Elo rating system built from game results and locations alone. Its settings (K-factor, home advantage, and how much of each rating carries over between seasons) were tuned on the 2004–2022 seasons, then scored once on the **held-out 2023–2026 seasons** (22,698 games):
+
+| Model | Accuracy | Log loss | Brier score |
+|---|---|---|---|
+| Coin flip | 50.0% | 0.693 | 0.250 |
+| Elo, default settings (K=20, home=75, carryover=0.75) | 70.4% | 0.572 | 0.195 |
+| **Elo, tuned (K=50, home=100, carryover=0.90)** | **70.8%** | **0.557** | **0.190** |
+
+Lower is better for log loss and Brier score.
+
+**Key findings:**
+
+- **The default Elo was underconfident.** When it gave a team a 75% chance, that team actually won about 84% of the time. Its ratings moved too slowly to separate the best teams from the weakest. Raising K fixed most of this, and the tuned model's probabilities sit close to the ideal calibration line.
+- **The held-out score is the honest one.** Tuned Elo scored 0.536 log loss on the seasons it was tuned on but 0.557 on the unseen seasons. Reporting the tuning score would have overstated the model.
+- **2021 was the hardest season to predict** (69.0% accuracy for tuned Elo), likely because COVID shortened schedules and largely removed crowds. That season also had the lowest home win rate in the data (61.4%).
+- **The ratings pass a sanity check.** At the end of 2025, the top four teams by tuned Elo were Houston, Florida, Duke, and Auburn: the actual Final Four.
+
+![Calibration of default vs. tuned Elo on 2023–2026 test seasons](docs/images/elo_calibration.png)
+
+Full analysis: [`notebooks/03_elo_baseline.ipynb`](notebooks/03_elo_baseline.ipynb). This is the baseline every later model must beat.
 
 ## Tech stack
 
@@ -82,7 +103,7 @@ cbb-predictor/
 
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/cbb-predictor.git
+git clone https://github.com/coreyw7/cbb-predictor.git
 cd cbb-predictor
 
 # Install Python and all dependencies (creates .venv automatically)
@@ -91,10 +112,11 @@ uv sync
 
 **Download the data:** Get the latest March Machine Learning Mania dataset from Kaggle and place the men's files (prefixed with `M`) in `data/raw/`.
 
-**Load data into DuckDB:** Run the following command to restructure and load the raw data into a DuckDB file.
+**Build the database:** Load raw data into DuckDB, then compute the features such as Elo ratings.
 
 ```bash
 uv run cbb-ingest
+uv run cbb-features
 ```
 
 **Run the tests:**
@@ -109,7 +131,7 @@ uv run pytest
 - [x] Load historical Kaggle data into DuckDB
 - [ ] Team ID mapping across data sources
 - [ ] Point-in-time feature pipeline
-- [ ] Elo rating system
+- [x] Elo rating system
 - [ ] Baseline logistic regression and backtest
 - [ ] LightGBM model with full feature set
 - [ ] Benchmark against Vegas closing lines

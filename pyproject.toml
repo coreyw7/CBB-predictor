@@ -9,11 +9,13 @@ dependencies = [
     "matplotlib>=3.11.2",
     "pandas>=3.0.6",
     "pyarrow>=26.0.0",
+    "scikit-learn>=1.9.1",
 ]
 
 [project.scripts]
 cbb-predictor = "cbb_predictor:main"
 cbb-ingest = "cbb_predictor.ingest.load:main"
+cbb-features = "cbb_predictor.features.build:main"
 
 [build-system]
 requires = ["uv_build>=0.13.4,<0.14.0"]
