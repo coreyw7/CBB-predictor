@@ -9,8 +9,8 @@ def expected_score(rating_a: float, rating_b: float, home_adv: float = 0) -> flo
 
 # change = K × (actual − expected)
 # new_rating = 1500 + keep × (old_rating − 1500)
-def compute_elo(games: pd.DataFrame, k: float = 20, home_adv: float = 75,
-                keep: float = 0.75) -> pd.DataFrame:
+def compute_elo(games: pd.DataFrame, k: float = 50, home_adv: float = 100,
+                keep: float = 0.90) -> pd.DataFrame:
     """Run Elo over games in date order.
 
     Returns one row per team per game with that team's PRE-game rating:
