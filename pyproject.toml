@@ -18,6 +18,7 @@ dependencies = [
 cbb-predictor = "cbb_predictor:main"
 cbb-ingest = "cbb_predictor.ingest.load:main"
 cbb-fetch = "cbb_predictor.ingest.cbbd:main"
+cbb-teams = "cbb_predictor.ingest.teams:main"
 cbb-features = "cbb_predictor.features.build:main"
 
 [build-system]
