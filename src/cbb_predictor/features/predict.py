@@ -1,7 +1,7 @@
 import pandas as pd
 
 from cbb_predictor.config import CURRENT_SEASON, DB_PATH
-from cbb_predictor.db import get_connection, write_table
+from cbb_predictor.db import append_table, get_connection, write_table
 from cbb_predictor.features.elo import (
     HOME_ADV,
     START_RATING,
@@ -10,7 +10,8 @@ from cbb_predictor.features.elo import (
 )
 
 ELO_COLUMNS = ["GameID", "Season", "Date", "TeamID", "OppTeamID", "Loc", "Win"]
-
+LOG_COLUMNS = ["GameID", "Date", "TeamID", "OppTeamID", "Loc",
+               "TeamElo", "OppElo", "WinProb", "PredictedAtUTC"]
 
 def predict_games(upcoming: pd.DataFrame, ratings: dict, home_adv: float = HOME_ADV) -> pd.DataFrame:
     """Add TeamElo, OppElo and WinProb to upcoming team-game rows."""
@@ -50,6 +51,7 @@ def main() -> None:
 
     with get_connection() as con:
         write_table(con, "predictions", predictions)
+        append_table(con, "prediction_log", predictions[LOG_COLUMNS])
 
     print_preview(predictions, teams)
 
