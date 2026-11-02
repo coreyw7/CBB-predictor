@@ -2,10 +2,8 @@ import unicodedata
 
 import pandas as pd
 
-from cbb_predictor.config import DB_PATH, RAW_DIR
+from cbb_predictor.config import CURRENT_SEASON, DB_PATH, RAW_DIR
 from cbb_predictor.db import get_connection, write_table
-
-CURRENT_SEASON = 2027
 
 # Renamed D1 teams: normalized CBBD name -> Kaggle TeamID
 TEAM_OVERRIDES = {

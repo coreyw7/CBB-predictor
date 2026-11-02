@@ -12,3 +12,5 @@ DB_PATH = PROCESSED_DIR / "cbb.duckdb"
 load_dotenv(PROJECT_ROOT / ".env")
 CBBD_API_KEY = os.getenv("CBBD_API_KEY")
 CBBD_BASE_URL = "https://api.collegebasketballdata.com"
+
+CURRENT_SEASON = 2027
