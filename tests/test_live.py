@@ -3,7 +3,7 @@ import pandas as pd
 from cbb_predictor.ingest.live import LIVE_GAME_ID_OFFSET, to_team_games
 
 GAME_COLUMNS = [
-    "id", "season", "startDate", "tournament", "status", "neutralSite",
+    "id", "season", "startDate", "startTimeTbd", "tournament", "status", "neutralSite",
     "homeTeamId", "awayTeamId", "homePoints", "awayPoints",
 ]
 
@@ -34,12 +34,12 @@ def row(result, game_id, team_id):
 
 def final_game(game_id=1, home=10, away=20, home_points=80, away_points=70, neutral=False,
                start="2026-11-10T00:00:00.000Z", tournament=None):
-    return (game_id, 2027, start, tournament, "final", neutral, home, away, home_points, away_points)
+    return (game_id, 2027, start, False, tournament, "final", neutral, home, away, home_points, away_points)
 
 
-def scheduled_game(game_id=1, home=10, away=20, start="2026-11-10T00:00:00.000Z"):
+def scheduled_game(game_id=1, home=10, away=20, start="2026-11-10T00:00:00.000Z", time_tbd=False):
     # CBBD stores 0-0 for games that haven't been played
-    return (game_id, 2027, start, None, "scheduled", False, home, away, 0, 0)
+    return (game_id, 2027, start, time_tbd, None, "scheduled", False, home, away, 0, 0)
 
 
 def test_two_rows_per_game_with_offset_ids():
@@ -97,7 +97,7 @@ def test_scheduled_game_has_no_score_or_result():
 
 
 def test_in_progress_game_has_no_result():
-    game = (1, 2027, "2026-11-10T00:00:00.000Z", None, "in_progress", False, 10, 20, 41, 38)
+    game = (1, 2027, "2026-11-10T00:00:00.000Z", False, None, "in_progress", False, 10, 20, 41, 38)
     result = to_team_games(make_cbbd_games([game]), TEAM_MAP)
     assert result["Win"].isna().all()
     assert result["Score"].isna().all()
@@ -156,3 +156,21 @@ def test_home_and_away_counts_match():
     counts = to_team_games(games, TEAM_MAP)["Loc"].value_counts()
     assert counts["H"] == counts["A"] == 2
     assert counts["N"] == 2
+
+
+def test_start_time_is_eastern_with_date_matching():
+    # 00:30 UTC on Nov 11 is 7:30 PM Eastern on Nov 10
+    result = to_team_games(make_cbbd_games([final_game(start="2026-11-11T00:30:00.000Z")]), TEAM_MAP)
+    assert set(result["StartET"]) == {pd.Timestamp("2026-11-10 19:30")}
+    assert result["StartET"].dt.tz is None
+    assert (result["Date"] == result["StartET"].dt.normalize()).all()
+
+
+def test_time_tbd_flag_passes_through():
+    games = make_cbbd_games([
+        scheduled_game(game_id=1, start="2026-11-12T05:00:00.000Z", time_tbd=True),
+        scheduled_game(game_id=2, start="2026-11-12T00:00:00.000Z", time_tbd=False),
+    ])
+    result = to_team_games(games, TEAM_MAP)
+    assert row(result, 1, 1181)["TimeTBD"]
+    assert not row(result, 2, 1181)["TimeTBD"]

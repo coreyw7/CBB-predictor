@@ -21,13 +21,18 @@ def to_team_games(cbbd_games: pd.DataFrame, team_map: pd.DataFrame) -> pd.DataFr
     )
     games = games.dropna(subset=["HomeTeamID", "AwayTeamID"])
 
+    start_et = (
+        pd.to_datetime(games["startDate"], utc=True)
+        .dt.tz_convert("America/New_York")
+        .dt.tz_localize(None)
+    )
+
     shared = pd.DataFrame({
         "GameID": LIVE_GAME_ID_OFFSET + games["id"],
         "Season": games["season"],
-        "Date": pd.to_datetime(games["startDate"], utc=True)
-                  .dt.tz_convert("America/New_York")
-                  .dt.tz_localize(None)
-                  .dt.normalize(),
+        "Date": start_et.dt.normalize(),
+        "StartET": start_et,
+        "TimeTBD": games["startTimeTbd"],
         "GameType": np.where(games["tournament"].eq("NCAA").fillna(False), "T", "R"),
         "Status": games["status"],
     })
