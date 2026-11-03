@@ -1,6 +1,6 @@
 import pandas as pd
 
-from cbb_predictor.config import CURRENT_SEASON, DB_PATH
+from cbb_predictor.config import CURRENT_SEASON
 from cbb_predictor.db import append_table, get_connection, write_table
 from cbb_predictor.features.elo import (
     HOME_ADV,
@@ -56,8 +56,12 @@ def main() -> None:
     print_preview(predictions, teams)
 
 
-def print_preview(predictions: pd.DataFrame, teams: pd.DataFrame) -> None:
-    """Print every game on the next game day, from each favorite's point of view."""
+
+def preview_table(predictions, teams):
+    """One row per game on the next game day, from the favorite's side, sorted by tip-off."""
+    # move everything from print_preview here, EXCEPT:
+    #   - keep WinProb as a NUMBER (don't format it as "87.3%" yet)
+    #   - return (next_day, table) instead of printing
     next_day = predictions["Date"].min()
     day = predictions[predictions["Date"] == next_day]
 
@@ -72,9 +76,17 @@ def print_preview(predictions: pd.DataFrame, teams: pd.DataFrame) -> None:
         "Favorite": favorites["TeamID"].map(names).fillna("New team"),
         "": favorites["Loc"].map({"H": "vs", "A": "at", "N": "vs (N)"}),
         "Underdog": favorites["OppTeamID"].map(names).fillna("New team"),
-        "WinProb": favorites["WinProb"].map("{:.1%}".format),
+        "WinProb": favorites["WinProb"],
     })
     table = table.loc[favorites.sort_values(["TimeTBD", "StartET", "WinProb"], ascending=[True, True, False]).index]
+
+    return (next_day, table)
+
+
+def print_preview(predictions, teams):
+    next_day, table = preview_table(predictions, teams)
+
+    table["WinProb"] = table["WinProb"].map("{:.1%}".format)
 
     print(f"\n{next_day:%A, %B %-d}: {len(table)} games")
     print(table.to_string(index=False))
