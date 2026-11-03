@@ -22,6 +22,7 @@ cbb-teams = "cbb_predictor.ingest.teams:main"
 cbb-features = "cbb_predictor.features.build:main"
 cbb-live = "cbb_predictor.ingest.live:main"
 cbb-predict = "cbb_predictor.features.predict:main"
+cbb-score = "cbb_predictor.features.score:main"
 
 [build-system]
 requires = ["uv_build>=0.13.4,<0.14.0"]
