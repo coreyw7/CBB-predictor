@@ -48,6 +48,11 @@ def main() -> None:
     results = live_team_games[live_team_games["Status"] == "final"]
     latest = latest_predictions(prediction_log)
     scored = score_games(latest, results)
+
+    if scored.empty:
+        print("No finished games to score yet")
+        return
+
     missing = set(results["GameID"]) - set(scored["GameID"])
     print(f"Games not predicted: {len(missing)}")
 

@@ -194,3 +194,11 @@ def test_main_reports_missing_games_and_upsets(test_db, capsys):
     assert "Games not predicted: 1" in out
     assert "Army" in out and "20.0%" in out
     assert out.index("Army") < out.rindex("Duke")   # winner listed before loser
+
+
+def test_main_with_nothing_to_score_does_not_crash(test_db, capsys):
+    # Only the unpredicted game 5 is final: predictions exist, but none can be scored yet
+    with db.get_connection(test_db) as con:
+        con.execute("UPDATE live_team_games SET Status = 'scheduled' WHERE GameID = 7")
+    score.main()
+    assert "No finished games to score yet" in capsys.readouterr().out
