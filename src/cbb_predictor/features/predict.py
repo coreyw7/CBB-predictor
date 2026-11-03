@@ -30,6 +30,39 @@ def predict_games(upcoming: pd.DataFrame, ratings: dict, home_adv: float = HOME_
     return predictions
 
 
+def preview_table(predictions: pd.DataFrame, teams: pd.DataFrame) -> tuple:
+    """One row per game on the next game day, from the favorite's side, sorted by tip-off."""
+    next_day = predictions["Date"].min()
+    day = predictions[predictions["Date"] == next_day]
+
+    favorites = day[day["WinProb"] >= 0.5].drop_duplicates("GameID")
+    names = teams.set_index("TeamID")["TeamName"]
+
+    tip = favorites["StartET"].dt.strftime("%-I:%M %p")
+    tip = tip.where(~favorites["TimeTBD"], "TBD")
+
+    table = pd.DataFrame({
+        "Tip Off (ET)": tip,
+        "Favorite": favorites["TeamID"].map(names).fillna("New team"),
+        "": favorites["Loc"].map({"H": "vs", "A": "at", "N": "vs (N)"}),
+        "Underdog": favorites["OppTeamID"].map(names).fillna("New team"),
+        "WinProb": favorites["WinProb"],
+    })
+    table = table.loc[favorites.sort_values(["TimeTBD", "StartET", "WinProb"], ascending=[True, True, False]).index]
+
+    return (next_day, table)
+
+
+def print_preview(predictions: pd.DataFrame, teams: pd.DataFrame) -> None:
+    """Print preview for upcoming days predictions."""
+    next_day, table = preview_table(predictions, teams)
+
+    table["WinProb"] = table["WinProb"].map("{:.1%}".format)
+
+    print(f"\n{next_day:%A, %B %-d}: {len(table)} games")
+    print(table.to_string(index=False))
+
+
 def main() -> None:
     """Predict every scheduled game this season and save the predictions to DuckDB."""
     with get_connection(read_only=True) as con:
@@ -54,42 +87,6 @@ def main() -> None:
         append_table(con, "prediction_log", predictions[LOG_COLUMNS])
 
     print_preview(predictions, teams)
-
-
-
-def preview_table(predictions, teams):
-    """One row per game on the next game day, from the favorite's side, sorted by tip-off."""
-    # move everything from print_preview here, EXCEPT:
-    #   - keep WinProb as a NUMBER (don't format it as "87.3%" yet)
-    #   - return (next_day, table) instead of printing
-    next_day = predictions["Date"].min()
-    day = predictions[predictions["Date"] == next_day]
-
-    favorites = day[day["WinProb"] >= 0.5].drop_duplicates("GameID")
-    names = teams.set_index("TeamID")["TeamName"]
-
-    tip = favorites["StartET"].dt.strftime("%-I:%M %p")
-    tip = tip.where(~favorites["TimeTBD"], "TBD")
-
-    table = pd.DataFrame({
-        "Tip Off (ET)": tip,
-        "Favorite": favorites["TeamID"].map(names).fillna("New team"),
-        "": favorites["Loc"].map({"H": "vs", "A": "at", "N": "vs (N)"}),
-        "Underdog": favorites["OppTeamID"].map(names).fillna("New team"),
-        "WinProb": favorites["WinProb"],
-    })
-    table = table.loc[favorites.sort_values(["TimeTBD", "StartET", "WinProb"], ascending=[True, True, False]).index]
-
-    return (next_day, table)
-
-
-def print_preview(predictions, teams):
-    next_day, table = preview_table(predictions, teams)
-
-    table["WinProb"] = table["WinProb"].map("{:.1%}".format)
-
-    print(f"\n{next_day:%A, %B %-d}: {len(table)} games")
-    print(table.to_string(index=False))
 
 
 if __name__ == "__main__":
