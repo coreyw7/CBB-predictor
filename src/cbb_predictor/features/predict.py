@@ -38,7 +38,7 @@ def preview_table(predictions: pd.DataFrame, teams: pd.DataFrame) -> tuple:
     favorites = day[day["WinProb"] >= 0.5].drop_duplicates("GameID")
     names = teams.set_index("TeamID")["TeamName"]
 
-    tip = favorites["StartET"].dt.strftime("%-I:%M %p")
+    tip = favorites["StartET"].dt.strftime("%I:%M %p").str.lstrip("0")
     tip = tip.where(~favorites["TimeTBD"], "TBD")
 
     table = pd.DataFrame({
@@ -59,7 +59,7 @@ def print_preview(predictions: pd.DataFrame, teams: pd.DataFrame) -> None:
 
     table["WinProb"] = table["WinProb"].map("{:.1%}".format)
 
-    print(f"\n{next_day:%A, %B %-d}: {len(table)} games")
+    print(f"\n{next_day:%A, %B} {next_day.day}: {len(table)} games")
     print(table.to_string(index=False))
 
 

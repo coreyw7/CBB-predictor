@@ -200,3 +200,11 @@ def test_second_run_replaces_predictions_but_appends_log(test_db, capsys):
     log = read_table(test_db, "prediction_log")
     assert len(log) == 4
     assert log["PredictedAtUTC"].nunique() == 2
+
+
+def test_preview_tip_times_drop_only_the_leading_zero(capsys):
+    # 9 PM shows as "9:00 PM" (not "09:00 PM"), but 10:05 PM must not become "1:5 PM"
+    rows = game(1, 1, 2, start="2026-11-10 21:00") + game(2, 3, 4, start="2026-11-10 22:05")
+    out = preview_output(capsys, rows, {1: 1600, 2: 1500, 3: 1600, 4: 1500})
+    assert "9:00 PM" in out and "09:00 PM" not in out
+    assert "10:05 PM" in out
