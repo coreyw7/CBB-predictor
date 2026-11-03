@@ -6,16 +6,26 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "duckdb>=1.5.6",
+    "jinja2>=3.1.6",
     "matplotlib>=3.11.2",
     "pandas>=3.0.6",
     "pyarrow>=26.0.0",
+    "python-dotenv>=1.2.4",
+    "requests>=2.34.2",
     "scikit-learn>=1.9.1",
 ]
 
 [project.scripts]
 cbb-predictor = "cbb_predictor:main"
 cbb-ingest = "cbb_predictor.ingest.load:main"
+cbb-fetch = "cbb_predictor.ingest.cbbd:main"
+cbb-teams = "cbb_predictor.ingest.teams:main"
 cbb-features = "cbb_predictor.features.build:main"
+cbb-live = "cbb_predictor.ingest.live:main"
+cbb-score = "cbb_predictor.features.score:main"
+cbb-predict = "cbb_predictor.features.predict:main"
+cbb-report = "cbb_predictor.features.report:main"
+cbb-update = "cbb_predictor.update:main"
 
 [build-system]
 requires = ["uv_build>=0.13.4,<0.14.0"]

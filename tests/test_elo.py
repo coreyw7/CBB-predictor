@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from cbb_predictor.features.elo import compute_elo, expected_score
+from cbb_predictor.features.elo import compute_elo, current_ratings, expected_score, run_elo
 
 def make_games(rows):
     """rows: list of (GameID, Date, Season, TeamID, OppTeamID, Loc), winner first."""
@@ -51,3 +51,46 @@ def test_pre_game_rating_ignores_results():
 
     assert get_elo(elo_a, 1, 1) > get_elo(elo_b, 1, 1)
 
+
+# One neutral-site 2026 game: equal teams, so the winner gains exactly K / 2 = 25
+SEASON_2026 = [(0, "2026-01-10", 2026, 1, 2, "N")]
+
+
+def test_run_elo_returns_final_ratings_and_last_season():
+    pre_game, ratings, last_season = run_elo(make_games(SEASON_2026))
+    assert len(pre_game) == 2
+    assert ratings == {1: pytest.approx(1525), 2: pytest.approx(1475)}
+    assert last_season == 2026
+
+
+def test_compute_elo_matches_run_elo():
+    games = make_games(SEASON_2026 + [(1, "2026-01-15", 2026, 2, 1, "H")])
+    pre_game, _, _ = run_elo(games)
+    pd.testing.assert_frame_equal(compute_elo(games), pre_game)
+
+
+def test_current_ratings_same_season_not_regressed():
+    ratings = current_ratings(make_games(SEASON_2026), season=2026)
+    assert ratings[1] == pytest.approx(1525)
+
+
+def test_current_ratings_regresses_before_new_season_starts():
+    # No 2027 games yet: ratings must still be pulled 10% toward 1500
+    ratings = current_ratings(make_games(SEASON_2026), season=2027)
+    assert ratings[1] == pytest.approx(1522.5)
+    assert ratings[2] == pytest.approx(1477.5)
+
+
+def test_current_ratings_does_not_regress_twice():
+    # A 2027 game between other teams triggers the regression inside the loop
+    games = make_games(SEASON_2026 + [(1, "2026-11-03", 2027, 3, 4, "N")])
+    ratings = current_ratings(games, season=2027)
+    assert ratings[1] == pytest.approx(1522.5)
+
+
+def test_current_ratings_include_new_season_results():
+    games = make_games(SEASON_2026 + [(1, "2026-11-03", 2027, 1, 3, "N")])
+    ratings = current_ratings(games, season=2027)
+    # Team 1 starts 2027 at 1522.5 and beats a new 1500 team, so it gains
+    assert ratings[1] > 1522.5
+    assert ratings[3] < 1500
