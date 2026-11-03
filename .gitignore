@@ -5,3 +5,4 @@ __pycache__/
 .ipynb_checkpoints/
 *.duckdb
 .DS_Store
+reports/

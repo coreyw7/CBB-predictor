@@ -172,6 +172,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
+    { name = "jinja2" },
     { name = "matplotlib" },
     { name = "pandas" },
     { name = "pyarrow" },
@@ -189,6 +190,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "duckdb", specifier = ">=1.5.6" },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "pandas", specifier = ">=3.0.6" },
     { name = "pyarrow", specifier = ">=26.0.0" },
