@@ -54,7 +54,7 @@ def build_report(next_day, table) -> str:
                     <style>{CSS}</style>
                 </head>
                 <body>
-                    <h1>{next_day:%A, %B %-d}</h1>
+                    <h1>{next_day:%A, %B} {next_day.day}</h1>
                     <p>{len(table)} games · Elo win probabilities</p>
                     {styled.to_html()}
                 </body>

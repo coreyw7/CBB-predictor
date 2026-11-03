@@ -1,0 +1,29 @@
+name: tests
+
+# When to run
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # Run the same steps on three operating systems
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # 1. Download your repo onto the fresh machine
+      - uses: actions/checkout@v4
+
+      # 2. Install uv (it then installs Python from your .python-version)
+      - uses: astral-sh/setup-uv@v6
+
+      # 3. Install the dependencies exactly as locked in uv.lock
+      - run: uv sync --locked
+
+      # 4. Run the tests
+      - run: uv run pytest

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- A unique name for the job (reverse-domain style) -->
+    <key>Label</key>
+    <string>com.coreyw7.cbb-update</string>
+
+    <!-- The command, split into separate words -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/uv</string>
+        <string>run</string>
+        <string>cbb-update</string>
+    </array>
+
+    <!-- Run from the project folder, so uv finds pyproject.toml -->
+    <key>WorkingDirectory</key>
+    <string>/Users/coreywarden/Projects/cbb-predictor</string>
+
+    <!-- When: every day at 9:00 (local time) -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+        
+        <!-- Write print() output immediately, so the log stays in order -->
+        <key>EnvironmentVariables</key>
+        <dict>
+            <key>PYTHONUNBUFFERED</key>
+            <string>1</string>
+        </dict>
+    </dict>
+
+    <!-- Where the output goes: nobody sees a terminal at 9 AM -->
+    <key>StandardOutPath</key>
+    <string>/Users/coreywarden/Projects/cbb-predictor/logs/update.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/coreywarden/Projects/cbb-predictor/logs/update.log</string>
+</dict>
+</plist>

@@ -70,7 +70,7 @@ def main() -> None:
     summary["Log Loss"] = summary["Log Loss"].map("{:.3f}".format)
     summary["Brier"] = summary["Brier"].map("{:.3f}".format)
 
-    print(f"\n{last_night:%A, %B %-d}: summary of results")
+    print(f"\n{last_night:%A, %B} {last_night.day}: summary of results")
     print(summary.to_string())
 
     winners = night[night["Win"] == 1]
@@ -89,7 +89,7 @@ def main() -> None:
     if upsets.empty:
         print("No upsets")
     else:
-        print(f"\n{last_night:%A, %B %-d}: top {len(upsets_table)} upsets")
+        print(f"\n{last_night:%A, %B} {last_night.day}: top {len(upsets_table)} upsets")
         print(upsets_table.to_string(index=False))
 
 

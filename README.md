@@ -1,4 +1,5 @@
 # CBB Predictor
+![tests](https://github.com/coreyw7/CBB-predictor/actions/workflows/tests.yml/badge.svg)
 
 A machine learning model that predicts the outcome of men's NCAA Division I basketball games, giving a win probability and a projected point margin for every matchup. It is trained on 20+ seasons of historical box scores and evaluated against Vegas closing lines.
 
@@ -160,6 +161,52 @@ uv run cbb-update
 
 Each step can also be run on its own, for example `uv run cbb-score` or `uv run cbb-report`.
 
+**Schedule it (optional):** run `cbb-update` automatically every morning. 9 AM local time works well:
+last night's games are final, and no games have tipped off yet. Create a `logs/` folder first
+(`mkdir logs`), since the schedulers below write their output there.
+
+<details>
+<summary><b>macOS (launchd)</b></summary>
+
+Edit the paths in [`deploy/com.coreyw7.cbb-update.plist`](deploy/com.coreyw7.cbb-update.plist) to match
+your machine (`which uv` gives the path to uv), then:
+
+```bash
+ln -s "$PWD/deploy/com.coreyw7.cbb-update.plist" ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.coreyw7.cbb-update.plist
+launchctl kickstart gui/$(id -u)/com.coreyw7.cbb-update   # run once now to test
+```
+
+If the Mac is asleep at 9 AM, launchd runs the job when it wakes.
+</details>
+
+<details>
+<summary><b>Windows (Task Scheduler)</b></summary>
+
+In Command Prompt, replacing the path with your project folder:
+
+```
+schtasks /Create /SC DAILY /ST 09:00 /TN "cbb-update" /TR "cmd /c cd /d C:\path\to\cbb-predictor && uv run cbb-update >> logs\update.log 2>&1"
+```
+
+To catch up after the PC was asleep, open Task Scheduler → `cbb-update` → Properties → Settings and check
+**Run task as soon as possible after a scheduled start is missed**.
+</details>
+
+<details>
+<summary><b>Linux (cron)</b></summary>
+
+Add this line with `crontab -e`, using the full path from `which uv`:
+
+```
+0 9 * * * cd ~/cbb-predictor && ~/.local/bin/uv run cbb-update >> logs/update.log 2>&1
+```
+
+cron skips runs missed while the machine is off. Use a systemd timer with `Persistent=true` if you need catch-up.
+</details>
+
+Output from each run is appended to `logs/update.log`.
+
 **Run the tests:**
 
 ```bash
@@ -173,7 +220,7 @@ uv run pytest
 - [x] Team ID mapping across data sources
 - [x] Elo rating system
 - [x] Live in-season pipeline: fetch, score, predict and HTML report (`cbb-update`)
-- [ ] Scheduled daily runs
+- [x] Scheduled daily runs
 - [ ] Point-in-time feature pipeline
 - [ ] Baseline logistic regression and backtest
 - [ ] LightGBM model with full feature set
