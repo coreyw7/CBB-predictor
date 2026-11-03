@@ -2,7 +2,7 @@
 
 A machine learning model that predicts the outcome of men's NCAA Division I basketball games, giving a win probability and a projected point margin for every matchup. It is trained on 20+ seasons of historical box scores and evaluated against Vegas closing lines.
 
-> **Status:** 🚧 In active development for the 2026–27 season. See the [Roadmap](#roadmap) for progress.
+> **Status:** 🏀 Making live Elo predictions for the 2026–27 season, with more models in development. See the [Roadmap](#roadmap) for progress.
 
 ---
 
@@ -60,6 +60,31 @@ Lower is better for log loss and Brier score.
 
 Full analysis: [`notebooks/03_elo_baseline.ipynb`](notebooks/03_elo_baseline.ipynb). This is the baseline every later model must beat.
 
+### Live 2026–27 season
+
+The tuned Elo model makes a prediction for every scheduled game before tip-off, then grades each prediction once the game is final. Only predictions logged **before** a game started are scored.
+
+| Period | Games | Accuracy | Log loss | Brier score |
+|---|---|---|---|---|
+| Opening night (Nov 2, 2026) | 114 | 89.5% | 0.362 | 0.109 |
+
+Opening week is full of mismatches between power-conference teams and small schools, so these early numbers are much better than the model's true level. The 70.8% held-out result above is the realistic expectation for a full season.
+
+## Daily pipeline
+
+One command, `cbb-update`, runs the whole day's work in order and stops at the first error, so a later step never runs on stale data:
+
+| Step | Command | What it does |
+|---|---|---|
+| 1 | `cbb-fetch` | Downloads the season's schedule and results from the CollegeBasketballData API |
+| 2 | `cbb-teams` | Maps CBBD team IDs onto the Kaggle team IDs used in the historical data |
+| 3 | `cbb-live` | Reshapes the games into one row per team per game, with Eastern dates and tip-off times |
+| 4 | `cbb-score` | Grades the latest pre-game prediction for every finished game and lists the night's biggest upsets |
+| 5 | `cbb-predict` | Updates Elo with every finished game, predicts all scheduled games and appends them to a prediction log |
+| 6 | `cbb-report` | Writes an HTML page of the next game day's predictions to `reports/` and opens it in the browser |
+
+Predictions are **appended** to a log table rather than overwritten, so every game can be scored against what the model said before it tipped off.
+
 ## Tech stack
 
 | Layer | Tools |
@@ -87,11 +112,13 @@ cbb-predictor/
 │   ├── raw/              # Downloaded source data (git-ignored)
 │   └── processed/        # Cleaned Parquet files and DuckDB database (git-ignored)
 ├── notebooks/            # Exploratory analysis
+├── reports/              # Generated daily HTML reports (git-ignored)
 ├── src/cbb_predictor/
-│   ├── ingest/           # Data download and loading
-│   ├── features/         # Point-in-time feature engineering, Elo ratings
-│   ├── models/           # Training, backtesting, prediction
-│   └── app/              # Streamlit dashboard
+│   ├── ingest/           # Kaggle and CBBD data download, team mapping, reshaping
+│   ├── features/         # Elo ratings, predictions, scoring, HTML reports
+│   ├── models/           # Training and backtesting (planned)
+│   ├── app/              # Streamlit dashboard (planned)
+│   └── update.py         # cbb-update: the daily pipeline
 ├── tests/
 ├── pyproject.toml
 └── uv.lock
@@ -99,7 +126,7 @@ cbb-predictor/
 
 ## Getting started
 
-**Prerequisites:** [uv](https://docs.astral.sh/uv/getting-started/installation/) and a free [Kaggle](https://www.kaggle.com) account.
+**Prerequisites:** [uv](https://docs.astral.sh/uv/getting-started/installation/), a free [Kaggle](https://www.kaggle.com) account, and a free [CollegeBasketballData](https://collegebasketballdata.com) API key for live predictions.
 
 ```bash
 # Clone the repository
@@ -119,6 +146,20 @@ uv run cbb-ingest
 uv run cbb-features
 ```
 
+**Add your API key:** create a `.env` file in the project root (it is git-ignored):
+
+```
+CBBD_API_KEY=your-key-here
+```
+
+**Run the daily pipeline:** fetch the latest games, score last night, predict upcoming games and open the report.
+
+```bash
+uv run cbb-update
+```
+
+Each step can also be run on its own, for example `uv run cbb-score` or `uv run cbb-report`.
+
 **Run the tests:**
 
 ```bash
@@ -129,13 +170,14 @@ uv run pytest
 
 - [x] Project setup (uv, git, project structure)
 - [x] Load historical Kaggle data into DuckDB
-- [ ] Team ID mapping across data sources
-- [ ] Point-in-time feature pipeline
+- [x] Team ID mapping across data sources
 - [x] Elo rating system
+- [x] Live in-season pipeline: fetch, score, predict and HTML report (`cbb-update`)
+- [ ] Scheduled daily runs
+- [ ] Point-in-time feature pipeline
 - [ ] Baseline logistic regression and backtest
 - [ ] LightGBM model with full feature set
 - [ ] Benchmark against Vegas closing lines
-- [ ] Nightly pipeline for live in-season predictions
 - [ ] Streamlit dashboard
 
 ## Disclaimer
